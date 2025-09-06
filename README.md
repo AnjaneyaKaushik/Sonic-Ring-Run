@@ -13,9 +13,7 @@ The objective of the game is to run as far as possible, collecting rings and avo
 -   **Increasing Difficulty:** The game's speed gradually increases over time, making it more challenging.
 
 ## Controls
-
 -   **Jump:** `Spacebar` / `Left Mouse Click` / `Touch`
--   **Toggle Fullscreen:** `F`
 
 ## Project Structure
 
