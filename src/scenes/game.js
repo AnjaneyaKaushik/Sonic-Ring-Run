@@ -4,7 +4,7 @@ import { makeMotobug } from "../entities/motobug";
 import { makeRing } from "../entities/ring";
 
 export default function game() {
-  const citySfx = k.play("Theme", { volume: 0.2, loop: true });
+  const citySfx = k.play("Theme", { volume: 0.4, loop: true });
   k.setGravity(3100);
   const bgPieceWidth = 1920;
   const bgPieces = [
@@ -44,8 +44,23 @@ export default function game() {
     k.text("SCORE : 0", { font: "mania", size: 72 }),
     k.pos(20, 20),
   ]);
+  
+  // Create heart sprites for lives display (text-based hearts for compatibility)
+  const hearts = [];
+  for (let i = 0; i < 3; i++) {
+    const heart = k.add([
+      k.text("❤", { font: "mania", size: 36 }),
+      k.pos(k.width() - 80 - i * 50, 40),
+      k.color(255, 0, 0),
+      k.anchor("center"),
+    ]);
+    hearts.push(heart);
+  }
+  
   let score = 0;
   let scoreMultiplier = 0;
+  let lives = 3;
+  let isInvincible = false;
   sonic.onCollide("ring", (ring) => {
     k.play("ring", { volume: 0.5 });
     k.destroy(ring);
@@ -75,9 +90,33 @@ export default function game() {
       return;
     }
 
+    // Check if player is invincible (just took damage)
+    if (isInvincible) {
+      return;
+    }
+
+    // Take damage
+    lives--;
+    // Remove a heart when life is lost
+    if (hearts[lives]) {
+      k.destroy(hearts[lives]);
+    }
     k.play("hurt", { volume: 0.5 });
-    k.setData("current-score", score);
-    k.go("gameover", citySfx);
+    
+    // Make player invincible for 2 seconds
+    isInvincible = true;
+    sonic.color = k.Color.fromArray([255, 100, 100]); // Red tint for invincibility
+    
+    k.wait(2, () => {
+      isInvincible = false;
+      sonic.color = k.Color.fromArray([255, 255, 255]); // Reset color
+    });
+
+    // Check if game over
+    if (lives <= 0) {
+      k.setData("current-score", score);
+      k.go("gameover", citySfx);
+    }
   });
 
   let gameSpeed = 300;
