@@ -14,6 +14,10 @@ const k = kaplay({
             keyboard : ["space"],
             mouse: "left",
         },
+        pause:
+        {
+            keyboard : ["escape"],
+        },
     },
     debugKey: "d",
     debug: false,

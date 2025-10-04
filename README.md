@@ -15,6 +15,15 @@ The objective of the game is to run as far as possible, collecting rings and avo
 ## Controls
 -   **Jump:** `Spacebar` / `Left Mouse Click` / `Touch`
 
+## Pause Screen
+
+You can pause the game at any time by pressing the `ESC` key or clicking the pause button on the top right of the screen. The pause screen displays the following information:
+
+-   **Current Score:** Your score in the current run.
+-   **High Score:** Your best score achieved across all runs.
+
+To resume the game, press the `ESC` key again or click the resume button.
+
 ## Project Structure
 
 The project is organized into the following main directories:

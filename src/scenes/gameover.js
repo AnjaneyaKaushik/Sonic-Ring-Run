@@ -5,19 +5,43 @@ export default function gameover(citySfx) {
   let bestScore = k.getData("best-score");
   const currentScore = k.getData("current-score");
 
-  const rankGrades = ["F", "E", "D", "C", "B", "A", "S"];
-  const rankValues = [50, 80, 100, 200, 300, 400, 500];
+  // Calculate score grades
+  let currentRank;
+  if (currentScore >= 500) {
+    currentRank = "S";
+  } else if (currentScore >= 400) {
+    currentRank = "A";
+  } else if (currentScore >= 300) {
+    currentRank = "B";
+  } else if (currentScore >= 200) {
+    currentRank = "C";
+  } else if (currentScore >= 100) {
+    currentRank = "D";
+  } else if (currentScore >= 80) {
+    currentRank = "E";
+  } else if (currentScore >= 50) {
+    currentRank = "F";
+  } else {
+    currentRank = "F";
+  }
 
-  let currentRank = "F";
-  let bestRank = "F";
-  for (let i = 0; i < rankValues.length; i++) {
-    if (rankValues[i] < currentScore) {
-      currentRank = rankGrades[i];
-    }
-
-    if (rankValues[i] < bestScore) {
-      bestRank = rankGrades[i];
-    }
+  let bestRank;
+  if (bestScore >= 500) {
+    bestRank = "S";
+  } else if (bestScore >= 400) {
+    bestRank = "A";
+  } else if (bestScore >= 300) {
+    bestRank = "B";
+  } else if (bestScore >= 200) {
+    bestRank = "C";
+  } else if (bestScore >= 100) {
+    bestRank = "D";
+  } else if (bestScore >= 80) {
+    bestRank = "E";
+  } else if (bestScore >= 50) {
+    bestRank = "F";
+  } else {
+    bestRank = "F";
   }
 
   if (bestScore < currentScore) {
