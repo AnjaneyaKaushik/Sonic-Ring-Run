@@ -186,17 +186,24 @@ export default function game() {
     k.pos(20, 20),
   ]);
   
-  // Create heart sprites for lives display (text-based hearts for compatibility)
+  // Lives UI (hearts)
   const hearts = [];
-  for (let i = 0; i < 3; i++) {
-    const heart = k.add([
-      k.text("❤", { font: "mania", size: 36 }),
-      k.pos(k.width() - 80 - i * 50, 40),
-      k.color(255, 0, 0),
-      k.anchor("center"),
-    ]);
-    hearts.push(heart);
-  }
+  const renderHearts = () => {
+    // Clear existing hearts
+    hearts.forEach(h => k.destroy(h));
+    hearts.length = 0;
+    // Recreate hearts based on current lives
+    for (let i = 0; i < lives; i++) {
+      const heart = k.add([
+        k.text("❤", { font: "mania", size: 36 }),
+        k.pos(k.width() - 80 - i * 50, 40),
+        k.color(255, 0, 0),
+        k.anchor("center"),
+        k.fixed(),
+      ]);
+      hearts.push(heart);
+    }
+  };
   
   // Create pause button
   pauseButton = k.add([
@@ -242,12 +249,111 @@ export default function game() {
   let scoreMultiplier = 0;
   let lives = 3;
   let isInvincible = false;
+  
+  // Addictive game mechanics
+  let ringStreak = 0;
+  let perfectRun = 0; // consecutive actions without taking damage
+  let comboTimer = 0;
+  let lastAction = "";
+  let streakRebuildChance = false; // Second chance mechanic
+  let lastChanceUsed = false; // Final rebuild opportunity
+  let streakSystemExhausted = false; // No more streak messages after final break
+  let perfectRunLifeAwarded = false; // Track if perfect run life was given
+  
+  // Initial render of hearts
+  renderHearts();
+  
+  // Combo/streak display
+  const comboText = k.add([
+    k.text("", { font: "mania", size: 48 }),
+    k.pos(k.center().x, 150),
+    k.anchor("center"),
+    k.color(255, 215, 0), // Gold color
+  ]);
+  
+  // Score checkpoint system
+  const checkpoints = [50, 250, 450, 500, 700, 1000];
+  let checkpointIndex = 0; // Track which checkpoint we're on
+  let livesGainedFromCheckpoints = 0; // Track how many lives gained from checkpoints
+  const maxGainedLives = 3; // Maximum lives that can be gained from checkpoints
+  
+  const addLife = () => {
+    // Only award life if player has less than 3 lives AND hasn't reached max gained lives
+    if (lives >= 3 || livesGainedFromCheckpoints >= maxGainedLives) {
+      return; // Don't add life if at full health or reached max gained lives
+    }
+    
+    lives++;
+    livesGainedFromCheckpoints++;
+    // Re-render hearts to reflect new life
+    renderHearts();
+    
+    // Play ding sound and show UI feedback
+    k.play("hyper-ring", { volume: 0.7 });
+    sonic.ringCollectUI.text = "+1 LIFE!";
+    sonic.ringCollectUI.color = k.Color.fromArray([0, 255, 0]); // Green for life
+    k.wait(2, () => {
+      sonic.ringCollectUI.text = "";
+      sonic.ringCollectUI.color = k.Color.fromArray([255, 255, 0]); // Reset to yellow
+    });
+  };
+  
+  const findNearestCheckpoint = (currentScore) => {
+    for (let i = 0; i < checkpoints.length; i++) {
+      if (currentScore < checkpoints[i]) {
+        return checkpoints[i];
+      }
+    }
+    return null; // All checkpoints reached
+  };
+  
+  const checkScoreCheckpoints = (newScore) => {
+    if (checkpointIndex < checkpoints.length && newScore >= checkpoints[checkpointIndex]) {
+      addLife();
+      // Display checkpoint progress
+      const currentCheckpoint = checkpointIndex + 1;
+      const totalCheckpoints = checkpoints.length;
+      comboText.text = `CHECKPOINT ${currentCheckpoint} OF ${totalCheckpoints}!`;
+      comboText.color = k.Color.fromArray([0, 255, 0]); // Green for checkpoint
+      k.wait(3, () => {
+        comboText.text = "";
+        comboText.color = k.Color.fromArray([255, 215, 0]); // Reset to gold
+      });
+      checkpointIndex++;
+    }
+  };
   sonic.onCollide("ring", (ring) => {
     k.play("ring", { volume: 0.5 });
     k.destroy(ring);
-    score++;
+    
+    ringStreak++;
+    perfectRun++;
+    comboTimer = 3; // Reset combo timer
+    lastAction = "ring";
+    
+    let ringPoints = 2;
+    let bonusText = "+2";
+    
+    // Ring streak bonuses (addictive!)
+    if (ringStreak >= 10) {
+      ringPoints = 5; // 2.5x bonus for 10+ streak
+      bonusText = "+5 STREAK!";
+      k.play("hyper-ring", { volume: 0.3 }); // Extra sound for streak
+    } else if (ringStreak >= 5) {
+      ringPoints = 3; // 1.5x bonus for 5+ streak
+      bonusText = "+3 COMBO!";
+    }
+    
+    score += ringPoints;
     scoreText.text = `SCORE : ${score}`;
-    sonic.ringCollectUI.text = "+1";
+    checkScoreCheckpoints(score);
+    sonic.ringCollectUI.text = bonusText;
+    
+    // Show streak counter
+    if (ringStreak >= 5) {
+      comboText.text = `${ringStreak} RING STREAK!`;
+    }
+    
     k.wait(1, () => {
       sonic.ringCollectUI.text = "";
     });
@@ -260,11 +366,48 @@ export default function game() {
       sonic.play("jump");
       sonic.jump();
       scoreMultiplier += 1;
-      score += 10 * scoreMultiplier;
+      perfectRun++;
+      comboTimer = 3;
+      lastAction = "enemy";
+      
+      let enemyPoints = 10 * scoreMultiplier;
+      
+      // Perfect run bonus (addictive!)
+      if (perfectRun >= 30 && !perfectRunLifeAwarded && lives < 3) {
+        // Award bonus life for amazing perfect run (only when needed)
+        lives++;
+        renderHearts();
+        perfectRunLifeAwarded = true;
+        enemyPoints += 100; // Massive score bonus too
+        sonic.ringCollectUI.text = `+${enemyPoints} + LIFE!`;
+        sonic.ringCollectUI.color = k.Color.fromArray([0, 255, 0]); // Green for life
+        k.play("hyper-ring", { volume: 0.8 });
+        comboText.text = `${perfectRun} PERFECT! BONUS LIFE!`;
+        k.wait(3, () => {
+          sonic.ringCollectUI.color = k.Color.fromArray([255, 255, 0]); // Reset color
+        });
+      } else if (perfectRun >= 30 && !perfectRunLifeAwarded && lives >= 3) {
+        // Still give massive score bonus even when at full lives
+        perfectRunLifeAwarded = true;
+        enemyPoints += 100;
+        sonic.ringCollectUI.text = `+${enemyPoints} PERFECT!`;
+        k.play("hyper-ring", { volume: 0.8 });
+        comboText.text = `${perfectRun} PERFECT RUN! MAX LIVES`;
+      } else if (perfectRun >= 20) {
+        enemyPoints += 50; // Huge bonus for perfect runs
+        sonic.ringCollectUI.text = `+${enemyPoints} PERFECT!`;
+        k.play("hyper-ring", { volume: 0.5 });
+        comboText.text = `${perfectRun} PERFECT RUN!`;
+      } else {
+        if (scoreMultiplier === 1)
+          sonic.ringCollectUI.text = `+${enemyPoints}`;
+        if (scoreMultiplier > 1) sonic.ringCollectUI.text = `x${scoreMultiplier}`;
+      }
+      
+      score += enemyPoints;
       scoreText.text = `SCORE : ${score}`;
-      if (scoreMultiplier === 1)
-        sonic.ringCollectUI.text = `+${10 * scoreMultiplier}`;
-      if (scoreMultiplier > 1) sonic.ringCollectUI.text = `x${scoreMultiplier}`;
+      checkScoreCheckpoints(score);
+      
       k.wait(1, () => {
         sonic.ringCollectUI.text = "";
       });
@@ -276,12 +419,57 @@ export default function game() {
       return;
     }
 
-    // Take damage
+    // Take damage - but give a rebuild chance!
     lives--;
-    // Remove a heart when life is lost
-    if (hearts[lives]) {
-      k.destroy(hearts[lives]);
+    
+    if (!streakRebuildChance && (ringStreak >= 5 || perfectRun >= 10)) {
+      // Give first rebuild chance for good streaks
+      streakRebuildChance = true;
+      ringStreak = Math.floor(ringStreak * 0.5); // Keep half the streak
+      perfectRun = Math.floor(perfectRun * 0.5);
+      comboText.text = "SECOND CHANCE! REBUILD!";
+      comboText.color = k.Color.fromArray([255, 165, 0]); // Orange for second chance
+      k.wait(3, () => {
+        comboText.text = "";
+        comboText.color = k.Color.fromArray([255, 215, 0]); // Reset to gold
+      });
+    } else if (!lastChanceUsed && streakRebuildChance && (ringStreak >= 3 || perfectRun >= 5)) {
+      // Give LAST CHANCE for any remaining streak
+      lastChanceUsed = true;
+      ringStreak = Math.floor(ringStreak * 0.3); // Keep 30% of streak
+      perfectRun = Math.floor(perfectRun * 0.3);
+      comboText.text = "LAST CHANCE! FINAL REBUILD!";
+      comboText.color = k.Color.fromArray([255, 0, 0]); // Red for urgency
+      k.wait(4, () => {
+        comboText.text = "";
+        comboText.color = k.Color.fromArray([255, 215, 0]); // Reset to gold
+      });
+    } else {
+      // No mercy - full reset
+      ringStreak = 0;
+      perfectRun = 0;
+      perfectRunLifeAwarded = false; // Allow another perfect run bonus
+      streakRebuildChance = false; // Reset rebuild chance for next time
+      lastChanceUsed = false; // Reset last chance for next life cycle
+      
+      // Only show "STREAK BROKEN!" once per game session
+      if (!streakSystemExhausted) {
+        streakSystemExhausted = true;
+        const nearestCheckpoint = findNearestCheckpoint(score);
+        if (nearestCheckpoint) {
+          comboText.text = `STREAK BROKEN! NEXT: ${nearestCheckpoint} POINTS`;
+        } else {
+          comboText.text = "STREAK BROKEN! ALL CHECKPOINTS REACHED!";
+        }
+        k.wait(4, () => {
+          comboText.text = "";
+        });
+      }
+      // After first break, damage is silent - no more streak messages
     }
+    
+    // Update hearts UI when life is lost
+    renderHearts();
     k.play("hurt", { volume: 0.5 });
     
     // Make player invincible for 2 seconds
@@ -301,9 +489,9 @@ export default function game() {
   });
 
   let gameSpeed = 300;
-  k.loop(1, () => {
+  k.loop(1.5, () => {
     if (!isPaused) {
-      gameSpeed += 50;
+      gameSpeed += 35;
     }
   });
 
@@ -386,6 +574,14 @@ export default function game() {
     if (isPaused) return;
     
     if (sonic.isGrounded()) scoreMultiplier = 0;
+    
+    // Combo timer countdown (adds urgency!)
+    if (comboTimer > 0) {
+      comboTimer -= k.dt();
+      if (comboTimer <= 0 && ringStreak >= 5) {
+        comboText.text = "";
+      }
+    }
 
     if (bgPieces[1].pos.x < 0) {
       bgPieces[0].moveTo(bgPieces[1].pos.x + bgPieceWidth * 2, 0);

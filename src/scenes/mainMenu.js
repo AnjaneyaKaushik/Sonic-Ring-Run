@@ -32,6 +32,18 @@ export default function mainMenu() {
     k.anchor("center"),
     k.pos(k.center().x, k.center().y - 200),
   ]);
+  
+  // Addictive warning footer
+  k.add([
+    k.text("PS: This can be addictive, please play at your own risk!", { 
+      font: "mania", 
+      size: 24 
+    }),
+    k.anchor("center"),
+    k.pos(k.center().x, k.height() - 50),
+    k.color(255, 215, 0), // Gold color for visibility
+    k.opacity(0.8),
+  ]);
 
   makeSonic(k.vec2(200, 745));
   const gameSpeed = 4000;

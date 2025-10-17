@@ -7,17 +7,17 @@ export default function gameover(citySfx) {
 
   // Calculate score grades
   let currentRank;
-  if (currentScore >= 500) {
+  if (currentScore >= 1500) {
     currentRank = "S";
-  } else if (currentScore >= 400) {
+  } else if (currentScore >= 1200) {
     currentRank = "A";
-  } else if (currentScore >= 300) {
+  } else if (currentScore >= 900) {
     currentRank = "B";
-  } else if (currentScore >= 200) {
+  } else if (currentScore >= 600) {
     currentRank = "C";
-  } else if (currentScore >= 100) {
+  } else if (currentScore >= 300) {
     currentRank = "D";
-  } else if (currentScore >= 80) {
+  } else if (currentScore >= 150) {
     currentRank = "E";
   } else if (currentScore >= 50) {
     currentRank = "F";
@@ -26,17 +26,17 @@ export default function gameover(citySfx) {
   }
 
   let bestRank;
-  if (bestScore >= 500) {
+  if (bestScore >= 1500) {
     bestRank = "S";
-  } else if (bestScore >= 400) {
+  } else if (bestScore >= 1200) {
     bestRank = "A";
-  } else if (bestScore >= 300) {
+  } else if (bestScore >= 900) {
     bestRank = "B";
-  } else if (bestScore >= 200) {
+  } else if (bestScore >= 600) {
     bestRank = "C";
-  } else if (bestScore >= 100) {
+  } else if (bestScore >= 300) {
     bestRank = "D";
-  } else if (bestScore >= 80) {
+  } else if (bestScore >= 150) {
     bestRank = "E";
   } else if (bestScore >= 50) {
     bestRank = "F";
