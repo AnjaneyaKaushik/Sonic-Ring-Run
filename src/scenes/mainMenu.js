@@ -32,20 +32,36 @@ export default function mainMenu() {
     k.anchor("center"),
     k.pos(k.center().x, k.center().y - 200),
   ]);
-  
-  // Addictive warning footer
+
+  // Addictive warning footer with highlight box
   k.add([
-    k.text("PS: This can be addictive, please play at your own risk!", { 
-      font: "mania", 
-      size: 24 
+    k.rect(850, 60, { radius: 10 }),
+    k.pos(k.center().x, k.height() - 50),
+    k.color(0, 0, 0, 0.7),
+    k.outline(4, k.Color.fromArray([255, 215, 0])),
+    k.anchor("center"),
+  ]);
+
+  k.add([
+    k.text("PS: This can be addictive, please play at your own risk!", {
+      font: "mania",
+      size: 24
     }),
     k.anchor("center"),
     k.pos(k.center().x, k.height() - 50),
-    k.color(255, 215, 0), // Gold color for visibility
-    k.opacity(0.8),
+    k.color(255, 215, 0),
   ]);
 
   makeSonic(k.vec2(200, 745));
+
+  k.add([
+    k.rect(1920, 300),
+    k.opacity(0),
+    k.area(),
+    k.pos(0, 832),
+    k.body({ isStatic: true }),
+  ]);
+
   const gameSpeed = 4000;
   k.onUpdate(() => {
     if (bgPieces[1].pos.x < 0) {

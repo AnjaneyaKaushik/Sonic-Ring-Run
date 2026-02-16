@@ -1,7 +1,7 @@
 import k from "../kaplayCtx";
 
 export default function gameover(citySfx) {
-  citySfx.paused = true;
+  if (citySfx) citySfx.stop();
   let bestScore = k.getData("best-score");
   const currentScore = k.getData("current-score");
 

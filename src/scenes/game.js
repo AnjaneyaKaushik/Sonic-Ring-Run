@@ -6,36 +6,38 @@ import { makeRing } from "../entities/ring";
 export default function game() {
   const citySfx = k.play("Theme", { volume: 0.3, loop: true });
   k.setGravity(3100);
-  
+
   // Pause state management
   let isPaused = false;
   let pauseOverlay = null;
   let pauseButton = null;
+  let resetButton = null;
   let pauseButtonText = null;
   let pauseUIElements = [];
   let spawnedEnemies = [];
   let spawnedRings = [];
   let isSpawningRings = true;
   let isSpawningMotoBugs = true;
-  
+
   // Pause/Resume functions
   const pauseGame = () => {
     if (isPaused) return;
     isPaused = true;
-    
-    // Hide pause button
+
+    // Hide pause and reset buttons
     pauseButton.hidden = true;
-    
+    if (resetButton) resetButton.hidden = true;
+
     // Pause audio
-    citySfx.paused = true;
-    
+    if (citySfx) citySfx.paused = true;
+
     // Hide all game objects (enemies, rings, sonic)
     spawnedEnemies.forEach(enemy => enemy.hidden = true);
     spawnedRings.forEach(ring => ring.hidden = true);
     sonic.hidden = true;
     isSpawningRings = false;
     isSpawningMotoBugs = false;
-    
+
     // Create pause overlay
     pauseOverlay = k.add([
       k.rect(k.width(), k.height()),
@@ -44,14 +46,14 @@ export default function game() {
       k.fixed(),
     ]);
     pauseUIElements.push(pauseOverlay);
-    
+
     // Get high score
     const highScore = k.getData("best-score") || 0;
-    
+
     // Add pause title (similar to game over structure)
     const pauseTitle = k.add([
-      k.text("PAUSED", { 
-        font: "mania", 
+      k.text("PAUSED", {
+        font: "mania",
         size: 96,
         color: k.WHITE,
       }),
@@ -60,11 +62,11 @@ export default function game() {
       k.fixed(),
     ]);
     pauseUIElements.push(pauseTitle);
-    
+
     // Add current score display
     const currentScoreText = k.add([
-      k.text(`CURRENT SCORE : ${score}`, { 
-        font: "mania", 
+      k.text(`CURRENT SCORE : ${score}`, {
+        font: "mania",
         size: 64,
         color: k.WHITE,
       }),
@@ -73,11 +75,11 @@ export default function game() {
       k.fixed(),
     ]);
     pauseUIElements.push(currentScoreText);
-    
+
     // Add high score display
     const highScoreText = k.add([
-      k.text(`HIGH SCORE : ${highScore}`, { 
-        font: "mania", 
+      k.text(`HIGH SCORE : ${highScore}`, {
+        font: "mania",
         size: 64,
         color: k.Color.fromArray([255, 215, 0]), // Gold color for high score
       }),
@@ -86,32 +88,65 @@ export default function game() {
       k.fixed(),
     ]);
     pauseUIElements.push(highScoreText);
-    
-    // Add resume instructions (bottom like game over)
-    const resumeText = k.add([
-      k.text("Press ESC to Resume", { 
-        font: "mania", 
-        size: 64,
-        color: k.WHITE,
-      }),
-      k.anchor("center"),
-      k.pos(k.center().x, k.center().y + 350),
-      k.fixed(),
-    ]);
-    pauseUIElements.push(resumeText);
+
+    // Add buttons
+    const makeBtn = (text, pos, color, action) => {
+      const btn = k.add([
+        k.rect(400, 100, { radius: 12 }),
+        k.pos(k.center().x + pos.x, k.center().y + pos.y),
+        k.color(color),
+        k.outline(6, k.WHITE),
+        k.anchor("center"),
+        k.area(),
+        k.fixed(),
+        k.z(100),
+      ]);
+
+      const btnText = btn.add([
+        k.text(text, { font: "mania", size: 48 }),
+        k.anchor("center"),
+        k.color(k.WHITE),
+      ]);
+
+      btn.onHoverUpdate(() => {
+        btn.scale = k.vec2(1.1);
+        btn.color = color.lighten(30);
+      });
+
+      btn.onHoverEnd(() => {
+        btn.scale = k.vec2(1);
+        btn.color = color;
+      });
+
+      btn.onClick(action);
+      pauseUIElements.push(btn);
+    };
+
+    // Button data
+    const buttons = [
+      { text: "RESUME", color: k.Color.fromArray([34, 197, 94]), action: () => resumeGame() },
+      { text: "RESTART", color: k.Color.fromArray([59, 130, 246]), action: () => { citySfx.paused = true; citySfx.stop(); k.go("game"); } },
+      { text: "QUIT", color: k.Color.fromArray([239, 68, 68]), action: () => { citySfx.paused = true; citySfx.stop(); k.go("main-menu"); } },
+    ];
+
+    // Align buttons with consistent 130px center-to-center spacing
+    buttons.forEach((btnData, index) => {
+      makeBtn(btnData.text, k.vec2(0, 70 + index * 140), btnData.color, btnData.action);
+    });
   };
-  
+
   const resumeGame = () => {
     if (!isPaused) return;
     isPaused = false;
-    
-    // Show pause button
+
+    // Show pause and reset buttons
     pauseButton.hidden = false;
+    if (resetButton) resetButton.hidden = false;
     pauseButtonText.text = "⏸ PAUSE";
-    
+
     // Resume audio
-    citySfx.paused = false;
-    
+    if (citySfx) citySfx.paused = false;
+
     // Show all game objects
     spawnedEnemies.forEach(enemy => enemy.hidden = false);
     spawnedRings.forEach(ring => ring.hidden = false);
@@ -120,7 +155,7 @@ export default function game() {
     isSpawningMotoBugs = true;
     spawnRing();
     spawnMotoBug();
-    
+
     // Clean up all pause UI elements
     pauseUIElements.forEach(element => {
       k.destroy(element);
@@ -128,7 +163,7 @@ export default function game() {
     pauseUIElements = [];
     pauseOverlay = null;
   };
-  
+
   // Pause button handler
   k.onButtonPress("pause", () => {
     if (isPaused) {
@@ -137,7 +172,7 @@ export default function game() {
       pauseGame();
     }
   });
-  
+
   const bgPieceWidth = 1920;
   const bgPieces = [
     k.add([k.sprite("chemical-bg"), k.pos(0, 0), k.scale(2), k.opacity(0.8)]),
@@ -156,7 +191,7 @@ export default function game() {
 
   const sonic = makeSonic(k.vec2(200, 745));
   sonic.setEvents();
-  
+
   // Custom controls that respect pause state
   k.onButtonPress("jump", () => {
     if (isPaused) return;
@@ -185,7 +220,118 @@ export default function game() {
     k.text("SCORE : 0", { font: "mania", size: 72 }),
     k.pos(20, 20),
   ]);
-  
+
+  // Reset button under score
+  resetButton = k.add([
+    k.rect(150, 50, { radius: 8 }),
+    k.pos(20, 110),
+    k.color(0, 0, 0, 0.8),
+    k.outline(3, k.WHITE),
+    k.area(),
+    k.fixed(),
+    k.z(10),
+  ]);
+
+  resetButton.add([
+    k.text("RESET", { font: "mania", size: 24 }),
+    k.anchor("center"),
+    k.pos(75, 25),
+  ]);
+
+  resetButton.onClick(() => {
+    if (isPaused) return;
+    isPaused = true;
+
+    // Hide UI
+    pauseButton.hidden = true;
+    resetButton.hidden = true;
+
+    // Pause audio
+    if (citySfx) citySfx.paused = true;
+
+    // Hide game objects
+    spawnedEnemies.forEach(enemy => enemy.hidden = true);
+    spawnedRings.forEach(ring => ring.hidden = true);
+    sonic.hidden = true;
+    isSpawningRings = false;
+    isSpawningMotoBugs = false;
+
+    // Create confirmation overlay
+    const overlay = k.add([
+      k.rect(k.width(), k.height()),
+      k.color(0, 0, 0, 0.8),
+      k.fixed(),
+      k.z(100),
+    ]);
+    pauseUIElements.push(overlay);
+
+    const confirmBox = k.add([
+      k.rect(600, 350, { radius: 16 }),
+      k.color(20, 20, 20),
+      k.outline(6, k.WHITE),
+      k.pos(k.center()),
+      k.anchor("center"),
+      k.fixed(),
+      k.z(101),
+    ]);
+    pauseUIElements.push(confirmBox);
+
+    confirmBox.add([
+      k.text("RESET?", { font: "mania", size: 64 }),
+      k.pos(0, -80),
+      k.anchor("center"),
+    ]);
+
+    const makeConfirmBtn = (text, offset, color, action) => {
+      const btn = k.add([
+        k.rect(200, 80, { radius: 8 }),
+        k.pos(k.center().x + offset, k.center().y + 80),
+        k.color(color),
+        k.outline(4, k.WHITE),
+        k.anchor("center"),
+        k.area(),
+        k.fixed(),
+        k.z(102),
+      ]);
+      pauseUIElements.push(btn);
+
+      btn.add([
+        k.text(text, { font: "mania", size: 32 }),
+        k.anchor("center"),
+      ]);
+
+      btn.onClick(action);
+      btn.onHoverUpdate(() => {
+        btn.scale = k.vec2(1.1);
+        k.setCursor("pointer");
+      });
+      btn.onHoverEnd(() => {
+        btn.scale = k.vec2(1);
+        k.setCursor("default");
+      });
+    };
+
+    makeConfirmBtn("YES", -120, k.Color.fromArray([34, 197, 94]), () => {
+      citySfx.stop();
+      k.go("game");
+    });
+
+    makeConfirmBtn("NO", 120, k.Color.fromArray([239, 68, 68]), () => {
+      resumeGame();
+    });
+  });
+
+  resetButton.onHoverUpdate(() => {
+    if (isPaused) return;
+    resetButton.color = k.Color.fromArray([50, 50, 50, 0.9]);
+    k.setCursor("pointer");
+  });
+
+  resetButton.onHoverEnd(() => {
+    resetButton.color = k.Color.fromArray([0, 0, 0, 0.8]);
+    k.setCursor("default");
+  });
+
   // Lives UI (hearts)
   const hearts = [];
   const renderHearts = () => {
@@ -204,7 +350,7 @@ export default function game() {
       hearts.push(heart);
     }
   };
-  
+
   // Create pause button
   pauseButton = k.add([
     k.rect(120, 50, { radius: 8 }),
@@ -216,17 +362,17 @@ export default function game() {
     k.fixed(),
     k.z(10),
   ]);
-  
+
   // Add pause button text
   pauseButtonText = pauseButton.add([
-    k.text("⏸ PAUSE", { 
-      font: "mania", 
+    k.text("⏸ PAUSE", {
+      font: "mania",
       size: 24,
       color: k.WHITE,
     }),
     k.anchor("center"),
   ]);
-  
+
   // Make pause button clickable
   pauseButton.onClick(() => {
     if (isPaused) {
@@ -235,21 +381,21 @@ export default function game() {
       pauseGame();
     }
   });
-  
+
   // Add hover effect
   pauseButton.onHover(() => {
     pauseButton.color = k.Color.fromArray([50, 50, 50, 0.9]);
   });
-  
+
   pauseButton.onHoverEnd(() => {
     pauseButton.color = k.Color.fromArray([0, 0, 0, 0.8]);
   });
-  
+
   let score = 0;
   let scoreMultiplier = 0;
   let lives = 3;
   let isInvincible = false;
-  
+
   // Addictive game mechanics
   let ringStreak = 0;
   let perfectRun = 0; // consecutive actions without taking damage
@@ -259,10 +405,10 @@ export default function game() {
   let lastChanceUsed = false; // Final rebuild opportunity
   let streakSystemExhausted = false; // No more streak messages after final break
   let perfectRunLifeAwarded = false; // Track if perfect run life was given
-  
+
   // Initial render of hearts
   renderHearts();
-  
+
   // Combo/streak display
   const comboText = k.add([
     k.text("", { font: "mania", size: 48 }),
@@ -270,24 +416,24 @@ export default function game() {
     k.anchor("center"),
     k.color(255, 215, 0), // Gold color
   ]);
-  
+
   // Score checkpoint system
   const checkpoints = [50, 250, 450, 500, 700, 1000];
   let checkpointIndex = 0; // Track which checkpoint we're on
   let livesGainedFromCheckpoints = 0; // Track how many lives gained from checkpoints
   const maxGainedLives = 3; // Maximum lives that can be gained from checkpoints
-  
+
   const addLife = () => {
     // Only award life if player has less than 3 lives AND hasn't reached max gained lives
     if (lives >= 3 || livesGainedFromCheckpoints >= maxGainedLives) {
       return; // Don't add life if at full health or reached max gained lives
     }
-    
+
     lives++;
     livesGainedFromCheckpoints++;
     // Re-render hearts to reflect new life
     renderHearts();
-    
+
     // Play ding sound and show UI feedback
     k.play("hyper-ring", { volume: 0.7 });
     sonic.ringCollectUI.text = "+1 LIFE!";
@@ -297,7 +443,7 @@ export default function game() {
       sonic.ringCollectUI.color = k.Color.fromArray([255, 255, 0]); // Reset to yellow
     });
   };
-  
+
   const findNearestCheckpoint = (currentScore) => {
     for (let i = 0; i < checkpoints.length; i++) {
       if (currentScore < checkpoints[i]) {
@@ -306,7 +452,7 @@ export default function game() {
     }
     return null; // All checkpoints reached
   };
-  
+
   const checkScoreCheckpoints = (newScore) => {
     if (checkpointIndex < checkpoints.length && newScore >= checkpoints[checkpointIndex]) {
       addLife();
@@ -325,15 +471,15 @@ export default function game() {
   sonic.onCollide("ring", (ring) => {
     k.play("ring", { volume: 0.5 });
     k.destroy(ring);
-    
+
     ringStreak++;
     perfectRun++;
     comboTimer = 3; // Reset combo timer
     lastAction = "ring";
-    
+
     let ringPoints = 2;
     let bonusText = "+2";
-    
+
     // Ring streak bonuses (addictive!)
     if (ringStreak >= 10) {
       ringPoints = 5; // 2.5x bonus for 10+ streak
@@ -343,17 +489,17 @@ export default function game() {
       ringPoints = 3; // 1.5x bonus for 5+ streak
       bonusText = "+3 COMBO!";
     }
-    
+
     score += ringPoints;
     scoreText.text = `SCORE : ${score}`;
     checkScoreCheckpoints(score);
     sonic.ringCollectUI.text = bonusText;
-    
+
     // Show streak counter
     if (ringStreak >= 5) {
       comboText.text = `${ringStreak} RING STREAK!`;
     }
-    
+
     k.wait(1, () => {
       sonic.ringCollectUI.text = "";
     });
@@ -369,9 +515,9 @@ export default function game() {
       perfectRun++;
       comboTimer = 3;
       lastAction = "enemy";
-      
+
       let enemyPoints = 10 * scoreMultiplier;
-      
+
       // Perfect run bonus (addictive!)
       if (perfectRun >= 30 && !perfectRunLifeAwarded && lives < 3) {
         // Award bonus life for amazing perfect run (only when needed)
@@ -403,11 +549,11 @@ export default function game() {
           sonic.ringCollectUI.text = `+${enemyPoints}`;
         if (scoreMultiplier > 1) sonic.ringCollectUI.text = `x${scoreMultiplier}`;
       }
-      
+
       score += enemyPoints;
       scoreText.text = `SCORE : ${score}`;
       checkScoreCheckpoints(score);
-      
+
       k.wait(1, () => {
         sonic.ringCollectUI.text = "";
       });
@@ -421,7 +567,7 @@ export default function game() {
 
     // Take damage - but give a rebuild chance!
     lives--;
-    
+
     if (!streakRebuildChance && (ringStreak >= 5 || perfectRun >= 10)) {
       // Give first rebuild chance for good streaks
       streakRebuildChance = true;
@@ -451,7 +597,7 @@ export default function game() {
       perfectRunLifeAwarded = false; // Allow another perfect run bonus
       streakRebuildChance = false; // Reset rebuild chance for next time
       lastChanceUsed = false; // Reset last chance for next life cycle
-      
+
       // Only show "STREAK BROKEN!" once per game session
       if (!streakSystemExhausted) {
         streakSystemExhausted = true;
@@ -467,15 +613,15 @@ export default function game() {
       }
       // After first break, damage is silent - no more streak messages
     }
-    
+
     // Update hearts UI when life is lost
     renderHearts();
     k.play("hurt", { volume: 0.5 });
-    
+
     // Make player invincible for 2 seconds
     isInvincible = true;
     sonic.color = k.Color.fromArray([255, 100, 100]); // Red tint for invincibility
-    
+
     k.wait(2, () => {
       isInvincible = false;
       sonic.color = k.Color.fromArray([255, 255, 255]); // Reset color
@@ -502,10 +648,10 @@ export default function game() {
     if (isPaused) {
       motobug.hidden = true;
     }
-    
+
     motobug.onUpdate(() => {
       if (isPaused) return;
-      
+
       if (gameSpeed < 3000) {
         motobug.move(-(gameSpeed + 300), 0);
         return;
@@ -538,7 +684,7 @@ export default function game() {
     if (isPaused) {
       ring.hidden = true;
     }
-    
+
     ring.onUpdate(() => {
       if (isPaused) return;
       ring.move(-gameSpeed, 0);
@@ -572,9 +718,9 @@ export default function game() {
 
   k.onUpdate(() => {
     if (isPaused) return;
-    
+
     if (sonic.isGrounded()) scoreMultiplier = 0;
-    
+
     // Combo timer countdown (adds urgency!)
     if (comboTimer > 0) {
       comboTimer -= k.dt();
