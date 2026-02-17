@@ -410,7 +410,12 @@ export default function game() {
   let streakSystemExhausted = false; // No more streak messages after final break
   let perfectRunLifeAwarded = false;
   let bestScore = k.getData("best-score") || 0;
-  let highScoreBeaten = false; // Track if perfect run life was given
+  let highScoreBeaten = false;
+
+  // Dash Meter mechanics
+  let dashAmount = 0;
+  let isDashing = false;
+  const maxDash = 100; // Track if perfect run life was given
 
   // Initial render of hearts
   renderHearts();
@@ -421,6 +426,45 @@ export default function game() {
     k.pos(k.center().x, 150),
     k.anchor("center"),
     k.color(255, 215, 0), // Gold color
+  ]);
+
+  // Dash Meter UI
+  const dashMeterContainer = k.add([
+    k.rect(300, 30, { radius: 8 }),
+    k.pos(k.center().x, 1000),
+    k.color(0, 0, 0, 0.7),
+    k.outline(3, k.WHITE),
+    k.anchor("center"),
+    k.area(),
+    k.fixed(),
+  ]);
+
+  dashMeterContainer.onClick(() => triggerDash());
+
+  dashMeterContainer.onHoverUpdate(() => {
+    if (dashAmount >= maxDash && !isDashing) {
+      k.setCursor("pointer");
+    }
+  });
+
+  dashMeterContainer.onHoverEnd(() => {
+    k.setCursor("default");
+  });
+
+  const dashBar = dashMeterContainer.add([
+    k.rect(0, 24, { radius: 4 }),
+    k.pos(-147, 0), // Offset from center anchor
+    k.color(0, 191, 255), // Sonic Blue fill
+    k.anchor("left"),
+  ]);
+
+  const dashReadyText = k.add([
+    k.text("DASH READY! (SHIFT/RIGHT)", { font: "mania", size: 24 }),
+    k.pos(k.center().x, 960),
+    k.color(255, 255, 255),
+    k.anchor("center"),
+    k.fixed(),
+    k.opacity(0),
   ]);
 
   // Score checkpoint system
@@ -536,14 +580,27 @@ export default function game() {
     k.wait(1, () => {
       sonic.ringCollectUI.text = "";
     });
+
+    // Refill dash meter
+    if (!isDashing) {
+      dashAmount = Math.min(maxDash, dashAmount + 5);
+      dashBar.width = (dashAmount / maxDash) * 294;
+
+      if (dashAmount >= maxDash) {
+        dashReadyText.opacity = 1;
+        dashBar.color = k.Color.fromArray([255, 215, 0]); // Gold when ready
+      }
+    }
   });
   sonic.onCollide("enemy", (enemy) => {
-    if (!sonic.isGrounded()) {
+    if (!sonic.isGrounded() || isDashing) {
       k.play("destroy", { volume: 0.5 });
       k.play("hyper-ring", { volume: 0.5 });
       k.destroy(enemy);
-      sonic.play("jump");
-      sonic.jump();
+      if (!isDashing) {
+        sonic.play("jump");
+        sonic.jump();
+      }
       scoreMultiplier += 1;
       perfectRun++;
       comboTimer = 3;
@@ -590,11 +647,22 @@ export default function game() {
       k.wait(1, () => {
         sonic.ringCollectUI.text = "";
       });
+
+      // Refill dash meter from destroying enemies
+      if (!isDashing) {
+        dashAmount = Math.min(maxDash, dashAmount + 15);
+        dashBar.width = (dashAmount / maxDash) * 294;
+
+        if (dashAmount >= maxDash) {
+          dashReadyText.opacity = 1;
+          dashBar.color = k.Color.fromArray([255, 215, 0]); // Gold when ready
+        }
+      }
       return;
     }
 
-    // Check if player is invincible (just took damage)
-    if (isInvincible) {
+    // Check if player is invincible (just took damage or dashing)
+    if (isInvincible || isDashing) {
       return;
     }
 
@@ -740,6 +808,19 @@ export default function game() {
 
   spawnRing();
 
+  // Dash Input
+  const triggerDash = () => {
+    if (dashAmount >= maxDash && !isDashing && !isPaused) {
+      isDashing = true;
+      dashReadyText.opacity = 0;
+      k.play("hyper-ring", { volume: 1 });
+      sonic.color = k.Color.fromArray([0, 191, 255]); // Electrical blue glow
+    }
+  };
+
+  k.onButtonPress("dash", triggerDash);
+  k.onButtonPress("down", triggerDash);
+
   k.add([
     k.rect(1920, 300),
     k.opacity(0),
@@ -762,6 +843,19 @@ export default function game() {
       }
     }
 
+    // Dash depletion and logic
+    if (isDashing) {
+      dashAmount -= k.dt() * 16.67; // 6 second dash
+      dashBar.width = (dashAmount / maxDash) * 294;
+
+      if (dashAmount <= 0) {
+        dashAmount = 0;
+        isDashing = false;
+        sonic.color = k.Color.fromArray([255, 255, 255]);
+        dashBar.color = k.Color.fromArray([0, 191, 255]);
+      }
+    }
+
     if (bgPieces[1].pos.x < 0) {
       bgPieces[0].moveTo(bgPieces[1].pos.x + bgPieceWidth * 2, 0);
       bgPieces.push(bgPieces.shift());
@@ -779,7 +873,7 @@ export default function game() {
       platforms.push(platforms.shift());
     }
 
-    platforms[0].move(-gameSpeed, 0);
+    platforms[0].move(isDashing ? -gameSpeed * 2 : -gameSpeed, 0);
     platforms[1].moveTo(platforms[0].pos.x + platforms[1].width * 4, 450);
   });
 }

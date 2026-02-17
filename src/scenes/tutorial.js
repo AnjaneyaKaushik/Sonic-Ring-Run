@@ -147,12 +147,45 @@ export default function tutorial() {
     let perfectRun = 0;
     let scoreMultiplier = 0;
 
+    // Dash Meter mechanics (matching game.js)
+    let dashAmount = 0;
+    let isDashing = false;
+    const maxDash = 100;
+
     const comboText = k.add([
         k.text("", { font: "mania", size: 48 }),
         k.pos(k.center().x, 150),
         k.anchor("center"),
         k.color(255, 215, 0),
         k.fixed(),
+    ]);
+
+    // Dash Meter UI (matching game.js)
+    const dashMeterContainer = k.add([
+        k.rect(300, 30, { radius: 8 }),
+        k.pos(k.center().x, 1000),
+        k.color(0, 0, 0, 0.7),
+        k.outline(3, k.WHITE),
+        k.anchor("center"),
+        k.area(),
+        k.fixed(),
+        k.opacity(0), // Hidden until step 5
+    ]);
+
+    const dashBar = dashMeterContainer.add([
+        k.rect(0, 24, { radius: 4 }),
+        k.pos(-147, 0),
+        k.color(0, 191, 255),
+        k.anchor("left"),
+    ]);
+
+    const dashReadyText = k.add([
+        k.text("DASH READY! (SHIFT/RIGHT)", { font: "mania", size: 24 }),
+        k.pos(k.center().x, 960),
+        k.color(255, 255, 255),
+        k.anchor("center"),
+        k.fixed(),
+        k.opacity(0),
     ]);
 
     // Pause Button
@@ -201,6 +234,7 @@ export default function tutorial() {
     let hasJumped = false;
     let hasCollectedRing = false;
     let hasDestroyedEnemy = false;
+    let hasDashed = false;
     let isTransitioning = false;
 
     // Robust Step Transition
@@ -233,12 +267,32 @@ export default function tutorial() {
             }
             k.wait(3, () => nextStep(4));
         } else if (step === 5) {
+            instructionText.text = "UNLEASH THE DASH!";
+            subInstructionText.text = "COLLECT RINGS OR KILL ENEMIES TO FILL THE METER!";
+            dashMeterContainer.opacity = 1;
+
+            // Auto-fill a bit to show it
+            const fillInterval = k.loop(0.1, () => {
+                if (step !== 5) {
+                    fillInterval.cancel();
+                    return;
+                }
+                dashAmount = Math.min(maxDash, dashAmount + 2);
+                dashBar.width = (dashAmount / maxDash) * 294;
+                if (dashAmount >= maxDash) {
+                    dashReadyText.opacity = 1;
+                    dashBar.color = k.Color.fromArray([255, 215, 0]);
+                    subInstructionText.text = "PRESS SHIFT OR RIGHT ARROW TO DASH!";
+                    fillInterval.cancel();
+                }
+            });
+        } else if (step === 6) {
             instructionText.text = "PRACTICE RUN!";
             subInstructionText.text = "GIVE IT A TRY BEFORE THE REAL THING!";
 
             // Intense spawning for practice
             const ringLoop = k.loop(0.8, () => {
-                if (isPaused || step !== 5) return;
+                if (isPaused || step !== 6) return;
                 const ring = makeRing(k.vec2(k.width() + 100, k.rand(500, 745)));
                 spawnedRings.push(ring);
                 ring.onUpdate(() => {
@@ -248,7 +302,7 @@ export default function tutorial() {
             });
 
             const bugLoop = k.loop(1.5, () => {
-                if (isPaused || step !== 5) return;
+                if (isPaused || step !== 6) return;
                 const motobug = makeMotobug(k.vec2(k.width() + 100, 773));
                 spawnedEnemies.push(motobug);
                 motobug.onUpdate(() => {
@@ -266,23 +320,17 @@ export default function tutorial() {
             ]);
 
             const countdown = k.loop(1, () => {
-                if (isPaused || step !== 5) return;
+                if (isPaused || step !== 6) return;
                 timeLeft--;
                 timerText.text = `TIME LEFT: ${timeLeft}S`;
                 if (timeLeft <= 0) {
                     countdown.cancel();
-                    k.destroy(timerText);
+                    ringLoop.cancel();
+                    bugLoop.cancel();
+                    k.go("tutorial-end");
                 }
             });
-
-            k.wait(30, () => {
-                ringLoop.cancel();
-                bugLoop.cancel();
-                countdown.cancel();
-                if (timerText.exists()) k.destroy(timerText);
-                nextStep(5);
-            });
-        } else if (step === 6) {
+        } else if (step === 7) {
             instructionText.text = "YOU'RE READY TO RUN!";
             subInstructionText.text = "PRESS SPACE TO START THE REAL GAME!";
         }
@@ -342,14 +390,45 @@ export default function tutorial() {
 
         if (step === 1 && !hasJumped && !isTransitioning) {
             hasJumped = true;
-            isTransitioning = true;
+            instructionText.text = "NICE!";
             k.wait(1.5, () => nextStep(1));
         }
 
-        if (step === 6) {
+        if (step === 7) {
             citySfx.stop();
             k.go("tutorial-end");
         }
+    });
+
+    // Dash Input for Tutorial
+    const triggerDash = () => {
+        if (dashAmount >= maxDash && !isDashing && !isPaused) {
+            isDashing = true;
+            dashReadyText.opacity = 0;
+            k.play("hyper-ring", { volume: 1 });
+            sonic.color = k.Color.fromArray([0, 191, 255]);
+
+            if (step === 5 && !hasDashed) {
+                hasDashed = true;
+                instructionText.text = "POWERFUL!";
+                k.wait(3, () => nextStep(5));
+            }
+        }
+    };
+
+    k.onButtonPress("dash", triggerDash);
+    k.onButtonPress("down", triggerDash); // "down" is mapped to Right Arrow in kaplayCtx.js
+
+    dashMeterContainer.onClick(() => triggerDash());
+
+    dashMeterContainer.onHoverUpdate(() => {
+        if (dashAmount >= maxDash && !isDashing) {
+            k.setCursor("pointer");
+        }
+    });
+
+    dashMeterContainer.onHoverEnd(() => {
+        k.setCursor("default");
     });
 
     sonic.onCollide("ring", (ring) => {
@@ -383,6 +462,18 @@ export default function tutorial() {
         k.wait(1, () => {
             sonic.ringCollectUI.text = "";
         });
+
+        // Refill dash meter in tutorial
+        if (!isDashing) {
+            dashAmount = Math.min(maxDash, dashAmount + 5);
+            dashBar.width = (dashAmount / maxDash) * 294;
+
+            if (dashAmount >= maxDash) {
+                dashReadyText.opacity = 1;
+                dashBar.color = k.Color.fromArray([255, 215, 0]);
+                if (step === 5) subInstructionText.text = "PRESS SHIFT OR RIGHT ARROW TO DASH!";
+            }
+        }
 
         if (step === 2 && !hasCollectedRing) {
             hasCollectedRing = true;
@@ -421,12 +512,25 @@ export default function tutorial() {
                 sonic.ringCollectUI.text = "";
             });
 
+            // Refill dash meter from enemies in tutorial
+            if (!isDashing) {
+                dashAmount = Math.min(maxDash, dashAmount + 15);
+                dashBar.width = (dashAmount / maxDash) * 294;
+
+                if (dashAmount >= maxDash) {
+                    dashReadyText.opacity = 1;
+                    dashBar.color = k.Color.fromArray([255, 215, 0]);
+                    if (step === 5) subInstructionText.text = "PRESS SHIFT OR RIGHT ARROW TO DASH!";
+                }
+            }
+
             if (step === 3 && !hasDestroyedEnemy) {
                 hasDestroyedEnemy = true;
                 instructionText.text = "AWESOME!";
                 k.wait(1.5, () => nextStep(3));
             }
         } else {
+            if (isDashing) return; // Invincible while dashing
             k.play("hurt", { volume: 0.5 });
             k.destroy(enemy);
             spawnedEnemies = spawnedEnemies.filter(e => e !== enemy);
@@ -448,12 +552,26 @@ export default function tutorial() {
         bgPieces[0].move(-100, 0);
         bgPieces[1].moveTo(bgPieces[0].pos.x + bgPieceWidth * 2, 0);
 
+        // Dash depletion and speed logic for tutorial
+        if (isDashing) {
+            dashAmount -= k.dt() * 16.67; // 6 second dash parity with game.js
+            dashBar.width = (dashAmount / maxDash) * 294;
+
+            if (dashAmount <= 0) {
+                dashAmount = 0;
+                isDashing = false;
+                sonic.color = k.Color.fromArray([255, 255, 255]);
+                dashBar.color = k.Color.fromArray([0, 191, 255]);
+            }
+        }
+
         if (platforms[1].pos.x < 0) {
             platforms[0].moveTo(platforms[1].pos.x + platforms[1].width * 4, 450);
             platforms.push(platforms.shift());
         }
 
-        platforms[0].move(-800, 0);
+        const currentSpeed = isDashing ? 1600 : 800; // 2x speed while dashing
+        platforms[0].move(-currentSpeed, 0);
         platforms[1].moveTo(platforms[0].pos.x + platforms[1].width * 4, 450);
     });
 

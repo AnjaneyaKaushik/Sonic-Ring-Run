@@ -4,19 +4,27 @@ const k = kaplay({
     width: 1920,
     height: 1080,
     letterbox: true,
-    background: [0,0,0],
+    background: [0, 0, 0],
     global: false,
     touchToMouse: true,
-    buttons: 
+    buttons:
     {
         jump:
         {
-            keyboard : ["space"],
+            keyboard: ["space"],
             mouse: "left",
         },
         pause:
         {
-            keyboard : ["escape"],
+            keyboard: ["escape"],
+        },
+        dash:
+        {
+            keyboard: ["shift"],
+        },
+        down:
+        {
+            keyboard: ["s", "right"],
         },
     },
     debugKey: "d",
