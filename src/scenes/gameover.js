@@ -2,113 +2,153 @@ import k from "../kaplayCtx";
 
 export default function gameover(citySfx) {
   if (citySfx) citySfx.stop();
-  let bestScore = k.getData("best-score");
-  const currentScore = k.getData("current-score");
+  let bestScore = k.getData("best-score") || 0;
+  const currentScore = k.getData("current-score") || 0;
 
-  // Calculate score grades
-  let currentRank;
-  if (currentScore >= 1500) {
-    currentRank = "S";
-  } else if (currentScore >= 1200) {
-    currentRank = "A";
-  } else if (currentScore >= 900) {
-    currentRank = "B";
-  } else if (currentScore >= 600) {
-    currentRank = "C";
-  } else if (currentScore >= 300) {
-    currentRank = "D";
-  } else if (currentScore >= 150) {
-    currentRank = "E";
-  } else if (currentScore >= 50) {
-    currentRank = "F";
-  } else {
-    currentRank = "F";
+  // Hill Climb Style: Calculate checkpoints reached
+  let checkpointsReached = 0;
+  if (currentScore > 0) {
+    if (currentScore <= bestScore || bestScore === 0) {
+      // Only counting 50pt intervals if we're below the best score (or best is 0)
+      checkpointsReached = Math.floor(currentScore / 50);
+    } else {
+      // Counting 50pt intervals up to best, then 100pt intervals past it
+      const baselineCheckpoints = Math.floor(bestScore / 50);
+      const bonusCheckpoints = Math.floor((currentScore - bestScore) / 100);
+      checkpointsReached = baselineCheckpoints + bonusCheckpoints;
+    }
   }
 
-  let bestRank;
-  if (bestScore >= 1500) {
-    bestRank = "S";
-  } else if (bestScore >= 1200) {
-    bestRank = "A";
-  } else if (bestScore >= 900) {
-    bestRank = "B";
-  } else if (bestScore >= 600) {
-    bestRank = "C";
-  } else if (bestScore >= 300) {
-    bestRank = "D";
-  } else if (bestScore >= 150) {
-    bestRank = "E";
-  } else if (bestScore >= 50) {
-    bestRank = "F";
-  } else {
-    bestRank = "F";
-  }
+  // Dynamic Grading System
+  const calculateRank = (score, best) => {
+    if (score === 0) return "F";
+    if (score > best && best > 0) return "S";
 
-  if (bestScore < currentScore) {
+    const target = Math.max(best, 1000); // 1000 is the minimum goal for an S rank if highscore is low
+    const ratio = score / target;
+
+    if (ratio >= 0.9) return "S";
+    if (ratio >= 0.75) return "A";
+    if (ratio >= 0.6) return "B";
+    if (ratio >= 0.4) return "C";
+    if (ratio >= 0.2) return "D";
+    if (ratio >= 0.1) return "E";
+    return "F";
+  };
+
+  const currentRank = calculateRank(currentScore, bestScore);
+
+  // Calculate best rank before updating best score
+  let bestRank = calculateRank(bestScore, bestScore);
+
+  // Update high score if beaten
+  const isNewRecord = currentScore > bestScore;
+  if (isNewRecord) {
     k.setData("best-score", currentScore);
     bestScore = currentScore;
-    bestRank = currentRank;
+    bestRank = "S";
   }
 
+  // UI Construction
   k.add([
-    k.text("GAME OVER", { font: "mania", size: 96 }),
-    k.anchor("center"),
-    k.pos(k.center().x, k.center().y - 300),
-  ]);
-  k.add([
-    k.text(`BEST SCORE : ${bestScore}`, {
+    k.text(isNewRecord ? "NEW RECORD!" : "GAME OVER", {
       font: "mania",
-      size: 64,
+      size: 96,
+      color: isNewRecord ? k.Color.fromArray([255, 215, 0]) : k.WHITE
     }),
     k.anchor("center"),
-    k.pos(k.center().x - 400, k.center().y - 200),
+    k.pos(k.center().x, k.center().y - 320),
   ]);
+
+  // Checkpoints Stats (Hill Climb style)
   k.add([
-    k.text(`CURRENT SCORE : ${currentScore}`, {
+    k.text(`CHECKPOINTS CLEARED: ${checkpointsReached}`, {
       font: "mania",
-      size: 64,
+      size: 32,
+      color: k.Color.fromArray([0, 255, 0])
     }),
     k.anchor("center"),
-    k.pos(k.center().x + 400, k.center().y - 200),
+    k.pos(k.center().x, k.center().y - 230),
   ]);
 
-  const bestRankBox = k.add([
-    k.rect(400, 400, { radius: 4 }),
-    k.color(0, 0, 0),
-    k.area(),
+  k.add([
+    k.text(`BEST SCORE : ${bestScore}`, { font: "mania", size: 48 }),
     k.anchor("center"),
-    k.outline(6, k.Color.fromArray([255, 255, 255])),
-    k.pos(k.center().x - 400, k.center().y + 50),
+    k.pos(k.center().x - 400, k.center().y - 150),
   ]);
 
-  bestRankBox.add([
-    k.text(bestRank, { font: "mania", size: 100 }),
+  k.add([
+    k.text(`CURRENT SCORE : ${currentScore}`, { font: "mania", size: 48 }),
     k.anchor("center"),
+    k.pos(k.center().x + 400, k.center().y - 150),
   ]);
 
-  const currentRankBox = k.add([
-    k.rect(400, 400, { radius: 4 }),
-    k.color(0, 0, 0),
-    k.area(),
-    k.anchor("center"),
-    k.outline(6, k.Color.fromArray([255, 255, 255])),
-    k.pos(k.center().x + 400, k.center().y + 50),
-  ]);
+  // Rank Boxes
+  const makeRankBox = (rank, label, pos) => {
+    const box = k.add([
+      k.rect(350, 350, { radius: 8 }),
+      k.color(0, 0, 0, 0.8),
+      k.outline(6, k.WHITE),
+      k.pos(pos),
+      k.anchor("center"),
+    ]);
 
-  currentRankBox.add([
-    k.text(currentRank, { font: "mania", size: 100 }),
-    k.anchor("center"),
-  ]);
+    box.add([
+      k.text(label, { font: "mania", size: 32 }),
+      k.pos(0, -200),
+      k.anchor("center"),
+    ]);
+
+    box.add([
+      k.text(rank, { font: "mania", size: 120 }),
+      k.anchor("center"),
+    ]);
+
+    return box;
+  };
+
+  makeRankBox(bestRank, "BEST RANK", k.vec2(k.center().x - 400, k.center().y + 100));
+  makeRankBox(currentRank, "CURRENT RANK", k.vec2(k.center().x + 400, k.center().y + 100));
 
   k.wait(1, () => {
-    k.add([
-      k.text("Press Space/Click/Touch to Play Again", {
-        font: "mania",
-        size: 64,
-      }),
+    // Restart Button
+    const restartBtn = k.add([
+      k.sprite("restart"),
+      k.pos(k.center().x - 100, k.center().y + 350),
       k.anchor("center"),
-      k.pos(k.center().x, k.center().y + 350),
+      k.scale(0.1),
+      k.area(),
+      k.z(50),
     ]);
-    k.onButtonPress("jump", () => k.go("game"));
+
+    restartBtn.onClick(() => k.go("game"));
+    restartBtn.onHoverUpdate(() => {
+      restartBtn.scale = k.vec2(0.11);
+      k.setCursor("pointer");
+    });
+    restartBtn.onHoverEnd(() => {
+      restartBtn.scale = k.vec2(0.1);
+      k.setCursor("default");
+    });
+
+    // Menu Button
+    const menuBtn = k.add([
+      k.sprite("menu"),
+      k.pos(k.center().x + 100, k.center().y + 350),
+      k.anchor("center"),
+      k.scale(0.1),
+      k.area(),
+      k.z(50),
+    ]);
+
+    menuBtn.onClick(() => k.go("main-menu"));
+    menuBtn.onHoverUpdate(() => {
+      menuBtn.scale = k.vec2(0.11);
+      k.setCursor("pointer");
+    });
+    menuBtn.onHoverEnd(() => {
+      menuBtn.scale = k.vec2(0.1);
+      k.setCursor("default");
+    });
   });
 }

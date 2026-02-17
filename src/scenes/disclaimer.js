@@ -20,5 +20,5 @@ export default function disclaimer() {
     k.pos(k.center()),
   ]);
 
-  k.onButtonPress("jump", () => k.go("main-menu"));
+  k.onButtonPress("jump", () => k.go("intro"));
 }

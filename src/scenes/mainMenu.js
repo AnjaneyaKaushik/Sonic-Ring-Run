@@ -3,7 +3,13 @@ import { makeSonic } from "../entities/sonic";
 
 export default function mainMenu() {
   if (!k.getData("best-score")) k.setData("best-score", 0);
-  k.onButtonPress("jump", () => k.go("game"));
+  k.onButtonPress("jump", () => {
+    if (k.getData("tutorial-completed")) {
+      k.go("game");
+    } else {
+      k.go("tutorial");
+    }
+  });
 
   const bgPieceWidth = 1920;
   const bgPieces = [
@@ -27,11 +33,81 @@ export default function mainMenu() {
     k.pos(k.center().x, 200),
   ]);
 
-  k.add([
-    k.text("Press Space/Click/Touch to Play", { font: "mania", size: 32 }),
+  const playBtn = k.add([
+    k.sprite("play"),
+    k.pos(k.center().x, k.center().y - 150),
     k.anchor("center"),
-    k.pos(k.center().x, k.center().y - 200),
+    k.scale(0.5),
+    k.area(),
   ]);
+
+  playBtn.onClick(() => {
+    if (k.getData("tutorial-completed")) {
+      k.go("game");
+    } else {
+      k.go("tutorial");
+    }
+  });
+
+  playBtn.onHoverUpdate(() => {
+    playBtn.scale = k.vec2(0.55);
+    k.setCursor("pointer");
+  });
+
+  playBtn.onHoverEnd(() => {
+    playBtn.scale = k.vec2(0.5);
+    k.setCursor("default");
+  });
+
+  // How to play button
+  const howToPlayBtn = k.add([
+    k.rect(300, 60, { radius: 8 }),
+    k.pos(k.center().x, k.center().y + 80),
+    k.color(0, 0, 0, 0.8),
+    k.outline(3, k.WHITE),
+    k.anchor("center"),
+    k.area(),
+  ]);
+
+  howToPlayBtn.add([
+    k.text("HOW TO PLAY", { font: "mania", size: 24 }),
+    k.anchor("center"),
+  ]);
+
+  howToPlayBtn.onClick(() => k.go("tutorial"));
+  howToPlayBtn.onHoverUpdate(() => {
+    howToPlayBtn.scale = k.vec2(1.1);
+    k.setCursor("pointer");
+  });
+  howToPlayBtn.onHoverEnd(() => {
+    howToPlayBtn.scale = k.vec2(1);
+    k.setCursor("default");
+  });
+
+  // Legal button
+  const legalBtn = k.add([
+    k.rect(300, 60, { radius: 8 }),
+    k.pos(k.center().x, k.center().y + 160),
+    k.color(60, 60, 60, 0.8),
+    k.outline(3, k.WHITE),
+    k.anchor("center"),
+    k.area(),
+  ]);
+
+  legalBtn.add([
+    k.text("DISCLAIMER", { font: "mania", size: 24 }),
+    k.anchor("center"),
+  ]);
+
+  legalBtn.onClick(() => k.go("legal"));
+  legalBtn.onHoverUpdate(() => {
+    legalBtn.scale = k.vec2(1.1);
+    k.setCursor("pointer");
+  });
+  legalBtn.onHoverEnd(() => {
+    legalBtn.scale = k.vec2(1);
+    k.setCursor("default");
+  });
 
   // Addictive warning footer with highlight box
   k.add([

@@ -7,6 +7,10 @@ export default function game() {
   const citySfx = k.play("Theme", { volume: 0.3, loop: true });
   k.setGravity(3100);
 
+  k.onSceneLeave(() => {
+    if (citySfx) citySfx.stop();
+  });
+
   // Pause state management
   let isPaused = false;
   let pauseOverlay = null;
@@ -404,7 +408,9 @@ export default function game() {
   let streakRebuildChance = false; // Second chance mechanic
   let lastChanceUsed = false; // Final rebuild opportunity
   let streakSystemExhausted = false; // No more streak messages after final break
-  let perfectRunLifeAwarded = false; // Track if perfect run life was given
+  let perfectRunLifeAwarded = false;
+  let bestScore = k.getData("best-score") || 0;
+  let highScoreBeaten = false; // Track if perfect run life was given
 
   // Initial render of hearts
   renderHearts();
@@ -418,19 +424,21 @@ export default function game() {
   ]);
 
   // Score checkpoint system
-  const checkpoints = [50, 250, 450, 500, 700, 1000];
-  let checkpointIndex = 0; // Track which checkpoint we're on
-  let livesGainedFromCheckpoints = 0; // Track how many lives gained from checkpoints
-  const maxGainedLives = 3; // Maximum lives that can be gained from checkpoints
+  let checkpoints = [];
+  const initialLimit = Math.max(bestScore, 300);
+  for (let i = 50; i <= initialLimit; i += 50) {
+    checkpoints.push(i);
+  }
+
+  let checkpointIndex = 0;
 
   const addLife = () => {
-    // Only award life if player has less than 3 lives AND hasn't reached max gained lives
-    if (lives >= 3 || livesGainedFromCheckpoints >= maxGainedLives) {
-      return; // Don't add life if at full health or reached max gained lives
+    // Only award life if player has less than 3 lives
+    if (lives >= 3) {
+      return; // Don't add life if at full health
     }
 
     lives++;
-    livesGainedFromCheckpoints++;
     // Re-render hearts to reflect new life
     renderHearts();
 
@@ -454,18 +462,43 @@ export default function game() {
   };
 
   const checkScoreCheckpoints = (newScore) => {
+    // Check for high score
+    if (!highScoreBeaten && newScore > bestScore && bestScore > 0) {
+      highScoreBeaten = true;
+      comboText.text = "NEW HIGHSCORE!";
+      comboText.color = k.Color.fromArray([255, 215, 0]); // Gold
+      k.play("hyper-ring", { volume: 0.8 });
+
+      // Add infinite checkpoints every 100 points past highscore
+      const nextTarget = Math.ceil(newScore / 100) * 100;
+      checkpoints.push(nextTarget);
+
+      k.wait(4, () => {
+        if (comboText.text === "NEW HIGHSCORE!") comboText.text = "";
+      });
+    }
+
     if (checkpointIndex < checkpoints.length && newScore >= checkpoints[checkpointIndex]) {
       addLife();
-      // Display checkpoint progress
+
       const currentCheckpoint = checkpointIndex + 1;
       const totalCheckpoints = checkpoints.length;
-      comboText.text = `CHECKPOINT ${currentCheckpoint} OF ${totalCheckpoints}!`;
-      comboText.color = k.Color.fromArray([0, 255, 0]); // Green for checkpoint
+
+      comboText.text = `Checkpoint ${currentCheckpoint} of ${totalCheckpoints}`;
+      comboText.color = k.Color.fromArray([0, 255, 0]); // Green
+
       k.wait(3, () => {
         comboText.text = "";
-        comboText.color = k.Color.fromArray([255, 215, 0]); // Reset to gold
+        comboText.color = k.Color.fromArray([255, 215, 0]);
       });
+
       checkpointIndex++;
+
+      // If we've hit the last checkpoint, add a new one further out
+      if (checkpointIndex === checkpoints.length) {
+        const lastVal = checkpoints[checkpoints.length - 1];
+        checkpoints.push(lastVal + 100);
+      }
     }
   };
   sonic.onCollide("ring", (ring) => {
