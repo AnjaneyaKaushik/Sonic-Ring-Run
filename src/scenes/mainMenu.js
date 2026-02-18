@@ -32,6 +32,7 @@ export default function mainMenu() {
     k.anchor("center"),
     k.scale(0.5),
     k.area(),
+    k.z(100),
   ]);
 
   const handlePlayAction = () => {
@@ -65,6 +66,7 @@ export default function mainMenu() {
     k.outline(3, k.WHITE),
     k.anchor("center"),
     k.area(),
+    k.z(100),
   ]);
 
   howToPlayBtn.add([
@@ -96,6 +98,7 @@ export default function mainMenu() {
     k.outline(3, k.WHITE),
     k.anchor("center"),
     k.area(),
+    k.z(100),
   ]);
 
   legalBtn.add([

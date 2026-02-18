@@ -436,6 +436,7 @@ export default function game() {
     k.outline(3, k.WHITE),
     k.anchor("center"),
     k.area(),
+    k.z(100),
     k.fixed(),
   ]);
 
