@@ -4,6 +4,11 @@ import { makeSonic } from "../entities/sonic";
 export default function mainMenu() {
   if (!k.getData("best-score")) k.setData("best-score", 0);
 
+  // Power user shortcut
+  k.onKeyPress("f", () => {
+    k.setFullscreen(!k.isFullscreen());
+  });
+
   const bgPieceWidth = 1920;
   const bgPieces = [
     k.add([k.sprite("chemical-bg"), k.pos(0, 0), k.scale(2), k.opacity(0.8)]),
@@ -90,10 +95,42 @@ export default function mainMenu() {
     k.setCursor("default");
   });
 
-  // Legal button
-  const legalBtn = k.add([
+  // Fullscreen toggle button
+  const fullscreenBtn = k.add([
     k.rect(300, 60, { radius: 8 }),
     k.pos(k.center().x, k.center().y + 160),
+    k.color(0, 100, 200, 0.8),
+    k.outline(3, k.WHITE),
+    k.anchor("center"),
+    k.area(),
+    k.z(100),
+  ]);
+
+  fullscreenBtn.add([
+    k.text("FULLSCREEN", { font: "mania", size: 24 }),
+    k.anchor("center"),
+  ]);
+
+  const toggleFullscreen = () => k.setFullscreen(!k.isFullscreen());
+
+  fullscreenBtn.onClick(toggleFullscreen);
+  k.onMousePress("left", () => {
+    if (fullscreenBtn.isHovering()) toggleFullscreen();
+  });
+
+  fullscreenBtn.onHoverUpdate(() => {
+    fullscreenBtn.scale = k.vec2(1.1);
+    k.setCursor("pointer");
+  });
+  fullscreenBtn.onHoverEnd(() => {
+    fullscreenBtn.scale = k.vec2(1);
+    k.setCursor("default");
+  });
+
+  // Legal button (pushed down)
+  const legalBtn = k.add([
+    k.rect(300, 60, { radius: 8 }),
+    k.pos(k.center().x, k.center().y + 240),
     k.color(60, 60, 60, 0.8),
     k.outline(3, k.WHITE),
     k.anchor("center"),

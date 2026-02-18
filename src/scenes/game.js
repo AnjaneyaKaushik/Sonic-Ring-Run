@@ -129,6 +129,7 @@ export default function game() {
     // Button data
     const buttons = [
       { text: "RESUME", color: k.Color.fromArray([34, 197, 94]), action: () => resumeGame() },
+      { text: "FULLSCREEN", color: k.Color.fromArray([168, 85, 247]), action: () => k.setFullscreen(!k.isFullscreen()) },
       { text: "RESTART", color: k.Color.fromArray([59, 130, 246]), action: () => { citySfx.paused = true; citySfx.stop(); k.go("game"); } },
       { text: "QUIT", color: k.Color.fromArray([239, 68, 68]), action: () => { citySfx.paused = true; citySfx.stop(); k.go("main-menu"); } },
     ];
