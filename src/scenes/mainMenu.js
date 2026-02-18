@@ -3,13 +3,6 @@ import { makeSonic } from "../entities/sonic";
 
 export default function mainMenu() {
   if (!k.getData("best-score")) k.setData("best-score", 0);
-  k.onButtonPress("jump", () => {
-    if (k.getData("tutorial-completed")) {
-      k.go("game");
-    } else {
-      k.go("tutorial");
-    }
-  });
 
   const bgPieceWidth = 1920;
   const bgPieces = [
@@ -42,11 +35,7 @@ export default function mainMenu() {
   ]);
 
   const handlePlayAction = () => {
-    if (k.getData("tutorial-completed")) {
-      k.go("game");
-    } else {
-      k.go("tutorial");
-    }
+    k.go("game");
   };
 
   playBtn.onClick(handlePlayAction);
