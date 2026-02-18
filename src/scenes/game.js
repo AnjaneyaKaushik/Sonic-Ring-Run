@@ -178,6 +178,19 @@ export default function game() {
     }
   });
 
+  // Handle browser-initiated fullscreen exit (e.g. ESC key)
+  const onFullscreenChange = () => {
+    if (!k.isFullscreen() && !isPaused) {
+      pauseGame();
+    }
+  };
+  document.addEventListener("fullscreenchange", onFullscreenChange);
+
+  k.onSceneLeave(() => {
+    document.removeEventListener("fullscreenchange", onFullscreenChange);
+    if (citySfx) citySfx.stop();
+  });
+
   const bgPieceWidth = 1920;
   const bgPieces = [
     k.add([k.sprite("chemical-bg"), k.pos(0, 0), k.scale(2), k.opacity(0.8)]),
@@ -356,46 +369,6 @@ export default function game() {
     }
   };
 
-  // Create pause button
-  pauseButton = k.add([
-    k.rect(120, 50, { radius: 8 }),
-    k.color(0, 0, 0, 0.8),
-    k.outline(3, k.WHITE),
-    k.pos(k.width() - 140, 100),
-    k.anchor("center"),
-    k.area(),
-    k.fixed(),
-    k.z(10),
-  ]);
-
-  // Add pause button text
-  pauseButtonText = pauseButton.add([
-    k.text("⏸ PAUSE", {
-      font: "mania",
-      size: 24,
-      color: k.WHITE,
-    }),
-    k.anchor("center"),
-  ]);
-
-  // Make pause button clickable
-  pauseButton.onClick(() => {
-    if (isPaused) {
-      resumeGame();
-    } else {
-      pauseGame();
-    }
-  });
-
-  // Add hover effect
-  pauseButton.onHover(() => {
-    pauseButton.color = k.Color.fromArray([50, 50, 50, 0.9]);
-  });
-
-  pauseButton.onHoverEnd(() => {
-    pauseButton.color = k.Color.fromArray([0, 0, 0, 0.8]);
-  });
-
   let score = 0;
   let scoreMultiplier = 0;
   let lives = 3;
@@ -475,6 +448,45 @@ export default function game() {
     k.fixed(),
     k.opacity(0),
   ]);
+
+  // Create refined pause button
+  pauseButton = k.add([
+    k.rect(140, 50, { radius: 8 }),
+    k.color(0, 0, 0, 0.8),
+    k.outline(3, k.WHITE),
+    k.pos(k.width() - 80, 100),
+    k.anchor("center"),
+    k.area(),
+    k.fixed(),
+    k.z(101),
+  ]);
+
+  pauseButtonText = pauseButton.add([
+    k.text("⏸ PAUSE", { font: "mania", size: 24, color: k.WHITE }),
+    k.anchor("center"),
+  ]);
+
+  const togglePauseFromBtn = () => {
+    if (isPaused) resumeGame();
+    else pauseGame();
+  };
+
+  pauseButton.onClick(togglePauseFromBtn);
+
+  // Mobile touch support
+  k.onMousePress("left", () => {
+    if (pauseButton.isHovering()) togglePauseFromBtn();
+  });
+
+  pauseButton.onHoverUpdate(() => {
+    pauseButton.scale = k.vec2(1.1);
+    k.setCursor("pointer");
+  });
+
+  pauseButton.onHoverEnd(() => {
+    pauseButton.scale = k.vec2(1);
+    k.setCursor("default");
+  });
 
   // Score checkpoint system
   let checkpoints = [];

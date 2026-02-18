@@ -16,7 +16,7 @@ const k = kaplay({
         },
         pause:
         {
-            keyboard: ["escape"],
+            keyboard: ["escape", "p"],
         },
         dash:
         {
