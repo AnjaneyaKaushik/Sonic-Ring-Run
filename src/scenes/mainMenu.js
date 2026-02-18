@@ -87,6 +87,9 @@ export default function mainMenu() {
     k.setCursor("default");
   });
 
+  // Fullscreen toggle logic
+  const toggleFullscreen = () => k.setFullscreen(!k.isFullscreen());
+
   // Fullscreen toggle button
   const fullscreenBtn = k.add([
     k.rect(300, 60, { radius: 8 }),
@@ -97,15 +100,13 @@ export default function mainMenu() {
     k.area({ scale: k.vec2(1.2, 1.5) }),
     k.z(100),
     "button",
-    { action: toggleFullscreen }
+    { action: () => toggleFullscreen() }
   ]);
 
   fullscreenBtn.add([
     k.text("FULLSCREEN", { font: "mania", size: 24 }),
     k.anchor("center"),
   ]);
-
-  const toggleFullscreen = () => k.setFullscreen(!k.isFullscreen());
 
   fullscreenBtn.onClick(toggleFullscreen);
 

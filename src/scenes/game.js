@@ -446,6 +446,11 @@ export default function game() {
     k.opacity(0),
   ]);
 
+  const togglePauseFromBtn = () => {
+    if (isPaused) resumeGame();
+    else pauseGame();
+  };
+
   // Create refined pause button
   pauseButton = k.add([
     k.rect(140, 50, { radius: 8 }),
@@ -457,18 +462,13 @@ export default function game() {
     k.fixed(),
     k.z(101),
     "button",
-    { action: togglePauseFromBtn }
+    { action: () => togglePauseFromBtn() }
   ]);
 
   pauseButtonText = pauseButton.add([
     k.text("⏸ PAUSE", { font: "mania", size: 24, color: k.WHITE }),
     k.anchor("center"),
   ]);
-
-  const togglePauseFromBtn = () => {
-    if (isPaused) resumeGame();
-    else pauseGame();
-  };
 
   pauseButton.onClick(togglePauseFromBtn);
 
