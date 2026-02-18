@@ -60,7 +60,9 @@ export default function legal() {
         k.color(239, 68, 68), // Red
         k.outline(4, k.WHITE),
         k.anchor("center"),
-        k.area(),
+        k.area({ scale: 1.5 }),
+        "button",
+        { action: () => k.go("main-menu") }
     ]);
 
     backBtn.add([
@@ -80,6 +82,16 @@ export default function legal() {
     backBtn.onHoverEnd(() => {
         backBtn.scale = k.vec2(1);
         k.setCursor("default");
+    });
+
+    // Unified Mobile/Desktop Button Handler
+    k.onMousePress("left", () => {
+        const mpos = k.mousePos();
+        k.get("button").forEach((btn) => {
+            if (btn.hasPoint(mpos) && btn.action) {
+                btn.action();
+            }
+        });
     });
 
     k.onUpdate(() => {

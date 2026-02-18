@@ -37,7 +37,14 @@ export default function tutorialEnd() {
         k.color(34, 197, 94),
         k.outline(4, k.WHITE),
         k.anchor("center"),
-        k.area(),
+        k.area({ scale: 1.5 }),
+        "button",
+        {
+            action: () => {
+                k.setData("tutorial-completed", true);
+                k.go("main-menu");
+            }
+        }
     ]);
 
     continueBtn.add([
@@ -60,6 +67,16 @@ export default function tutorialEnd() {
     continueBtn.onHoverEnd(() => {
         continueBtn.scale = k.vec2(1);
         k.setCursor("default");
+    });
+
+    // Unified Mobile/Desktop Button Handler
+    k.onMousePress("left", () => {
+        const mpos = k.mousePos();
+        k.get("button").forEach((btn) => {
+            if (btn.hasPoint(mpos) && btn.action) {
+                btn.action();
+            }
+        });
     });
 
     k.onUpdate(() => {

@@ -62,6 +62,10 @@ export default function tutorial() {
                 k.anchor("center"),
             ]);
 
+            btn.area({ scale: k.vec2(1.2) });
+            btn.tag("button");
+            btn.action = action;
+
             btn.onHoverUpdate(() => {
                 btn.scale = k.vec2(1.1);
                 k.setCursor("pointer");
@@ -77,8 +81,19 @@ export default function tutorial() {
 
         makeBtn("RESUME", k.vec2(0, 50), k.Color.fromArray([34, 197, 94]), () => resumeGame());
         makeBtn("QUIT", k.vec2(0, 180), k.Color.fromArray([239, 68, 68]), () => {
-            citySfx.stop();
+            if (citySfx) citySfx.stop();
             k.go("main-menu");
+        });
+
+        // Unified Mobile/Desktop Button Handler for Pause Menu
+        k.onMousePress("left", () => {
+            if (!isPaused) return;
+            const mpos = k.mousePos();
+            k.get("button").forEach((btn) => {
+                if (!btn.hidden && btn.hasPoint(mpos) && btn.action) {
+                    btn.action();
+                }
+            });
         });
     };
 
@@ -167,9 +182,11 @@ export default function tutorial() {
         k.color(0, 0, 0, 0.7),
         k.outline(3, k.WHITE),
         k.anchor("center"),
-        k.area(),
+        k.area({ scale: k.vec2(1.5, 3.0) }),
         k.fixed(),
         k.opacity(0), // Hidden until step 5
+        "button",
+        { action: () => triggerDash() }
     ]);
 
     const dashBar = dashMeterContainer.add([
@@ -195,9 +212,11 @@ export default function tutorial() {
         k.outline(3, k.WHITE),
         k.pos(k.width() - 140, 100),
         k.anchor("center"),
-        k.area(),
+        k.area({ scale: k.vec2(1.5, 2.0) }),
         k.fixed(),
         k.z(10),
+        "button",
+        { action: () => { if (isPaused) resumeGame(); else pauseGame(); } }
     ]);
 
     pauseButtonText = pauseButton.add([
@@ -582,9 +601,13 @@ export default function tutorial() {
         platforms[1].moveTo(platforms[0].pos.x + platforms[1].width * 4, 450);
     });
 
-    // Support ESC key for pause
-    k.onButtonPress("pause", () => {
-        if (isPaused) resumeGame();
-        else pauseGame();
+    // Unified Mobile/Desktop Button Handler for Game Scene
+    k.onMousePress("left", () => {
+        const mpos = k.mousePos();
+        k.get("button").forEach((btn) => {
+            if (!btn.hidden && btn.hasPoint(mpos) && btn.action) {
+                btn.action();
+            }
+        });
     });
 }

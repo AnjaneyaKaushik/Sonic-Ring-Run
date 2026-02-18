@@ -117,18 +117,13 @@ export default function gameover(citySfx) {
       k.pos(k.center().x - 100, k.center().y + 350),
       k.anchor("center"),
       k.scale(0.1),
-      k.area(),
+      k.area({ scale: 2 }), // Much larger hit area for mobile
       k.z(50),
+      "button", // Tag for global handler
+      { action: () => k.go("game") },
     ]);
 
     restartBtn.onClick(() => k.go("game"));
-
-    // Mobile touch support
-    k.onMousePress("left", () => {
-      if (restartBtn.isHovering()) {
-        k.go("game");
-      }
-    });
 
     restartBtn.onHoverUpdate(() => {
       restartBtn.scale = k.vec2(0.11);
@@ -145,18 +140,13 @@ export default function gameover(citySfx) {
       k.pos(k.center().x + 100, k.center().y + 350),
       k.anchor("center"),
       k.scale(0.1),
-      k.area(),
+      k.area({ scale: 2 }),
       k.z(50),
+      "button",
+      { action: () => k.go("main-menu") }
     ]);
 
     menuBtn.onClick(() => k.go("main-menu"));
-
-    // Mobile touch support
-    k.onMousePress("left", () => {
-      if (menuBtn.isHovering()) {
-        k.go("main-menu");
-      }
-    });
 
     menuBtn.onHoverUpdate(() => {
       menuBtn.scale = k.vec2(0.11);
@@ -165,6 +155,16 @@ export default function gameover(citySfx) {
     menuBtn.onHoverEnd(() => {
       menuBtn.scale = k.vec2(0.1);
       k.setCursor("default");
+    });
+
+    // Unified Mobile/Desktop Button Handler
+    k.onMousePress("left", () => {
+      const mpos = k.mousePos();
+      k.get("button").forEach((btn) => {
+        if (!btn.hidden && btn.hasPoint(mpos) && btn.action) {
+          btn.action();
+        }
+      });
     });
   });
 }

@@ -101,9 +101,11 @@ export default function game() {
         k.color(color),
         k.outline(6, k.WHITE),
         k.anchor("center"),
-        k.area(),
+        k.area({ scale: k.vec2(1.2) }),
         k.fixed(),
         k.z(100),
+        "button",
+        { action: action }
       ]);
 
       const btnText = btn.add([
@@ -409,19 +411,14 @@ export default function game() {
     k.color(0, 0, 0, 0.7),
     k.outline(3, k.WHITE),
     k.anchor("center"),
-    k.area(),
+    k.area({ scale: k.vec2(1.5, 3.0) }), // Double height hit area for bottom-screen tap
     k.z(100),
     k.fixed(),
+    "button",
+    { action: () => triggerDash() }
   ]);
 
   dashMeterContainer.onClick(() => triggerDash());
-
-  // Mobile touch support
-  k.onMousePress("left", () => {
-    if (dashMeterContainer.isHovering()) {
-      triggerDash();
-    }
-  });
 
   dashMeterContainer.onHoverUpdate(() => {
     if (dashAmount >= maxDash && !isDashing) {
@@ -456,9 +453,11 @@ export default function game() {
     k.outline(3, k.WHITE),
     k.pos(k.width() - 80, 100),
     k.anchor("center"),
-    k.area(),
+    k.area({ scale: k.vec2(1.5, 2.0) }), // Larger hit area for top-right tap
     k.fixed(),
     k.z(101),
+    "button",
+    { action: togglePauseFromBtn }
   ]);
 
   pauseButtonText = pauseButton.add([
@@ -473,9 +472,15 @@ export default function game() {
 
   pauseButton.onClick(togglePauseFromBtn);
 
-  // Mobile touch support
+  // Unified Mobile/Desktop Button Handler
   k.onMousePress("left", () => {
-    if (pauseButton.isHovering()) togglePauseFromBtn();
+    const mpos = k.mousePos();
+    k.get("button").forEach((btn) => {
+      // Direct point check is more reliable than isHovering on mobile
+      if (!btn.hidden && btn.hasPoint(mpos) && btn.action) {
+        btn.action();
+      }
+    });
   });
 
   pauseButton.onHoverUpdate(() => {

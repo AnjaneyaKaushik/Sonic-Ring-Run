@@ -36,8 +36,10 @@ export default function mainMenu() {
     k.pos(k.center().x, k.center().y - 150),
     k.anchor("center"),
     k.scale(0.5),
-    k.area(),
+    k.area({ scale: k.vec2(1.5) }), // Larger hit area for mobile
     k.z(100),
+    "button",
+    { action: () => handlePlayAction() }
   ]);
 
   const handlePlayAction = () => {
@@ -45,13 +47,6 @@ export default function mainMenu() {
   };
 
   playBtn.onClick(handlePlayAction);
-
-  // Mobile touch support
-  k.onMousePress("left", () => {
-    if (playBtn.isHovering()) {
-      handlePlayAction();
-    }
-  });
 
   playBtn.onHoverUpdate(() => {
     playBtn.scale = k.vec2(0.55);
@@ -70,8 +65,10 @@ export default function mainMenu() {
     k.color(0, 0, 0, 0.8),
     k.outline(3, k.WHITE),
     k.anchor("center"),
-    k.area(),
+    k.area({ scale: k.vec2(1.2, 1.5) }), // Taller/wider for mobile
     k.z(100),
+    "button",
+    { action: () => k.go("tutorial") }
   ]);
 
   howToPlayBtn.add([
@@ -81,11 +78,6 @@ export default function mainMenu() {
 
   howToPlayBtn.onClick(() => k.go("tutorial"));
 
-  k.onMousePress("left", () => {
-    if (howToPlayBtn.isHovering()) {
-      k.go("tutorial");
-    }
-  });
   howToPlayBtn.onHoverUpdate(() => {
     howToPlayBtn.scale = k.vec2(1.1);
     k.setCursor("pointer");
@@ -102,8 +94,10 @@ export default function mainMenu() {
     k.color(0, 100, 200, 0.8),
     k.outline(3, k.WHITE),
     k.anchor("center"),
-    k.area(),
+    k.area({ scale: k.vec2(1.2, 1.5) }),
     k.z(100),
+    "button",
+    { action: toggleFullscreen }
   ]);
 
   fullscreenBtn.add([
@@ -114,9 +108,6 @@ export default function mainMenu() {
   const toggleFullscreen = () => k.setFullscreen(!k.isFullscreen());
 
   fullscreenBtn.onClick(toggleFullscreen);
-  k.onMousePress("left", () => {
-    if (fullscreenBtn.isHovering()) toggleFullscreen();
-  });
 
   fullscreenBtn.onHoverUpdate(() => {
     fullscreenBtn.scale = k.vec2(1.1);
@@ -134,8 +125,10 @@ export default function mainMenu() {
     k.color(60, 60, 60, 0.8),
     k.outline(3, k.WHITE),
     k.anchor("center"),
-    k.area(),
+    k.area({ scale: k.vec2(1.2, 1.5) }),
     k.z(100),
+    "button",
+    { action: () => k.go("legal") }
   ]);
 
   legalBtn.add([
@@ -145,11 +138,6 @@ export default function mainMenu() {
 
   legalBtn.onClick(() => k.go("legal"));
 
-  k.onMousePress("left", () => {
-    if (legalBtn.isHovering()) {
-      k.go("legal");
-    }
-  });
   legalBtn.onHoverUpdate(() => {
     legalBtn.scale = k.vec2(1.1);
     k.setCursor("pointer");
@@ -177,6 +165,17 @@ export default function mainMenu() {
     k.pos(k.center().x, k.height() - 50),
     k.color(255, 215, 0),
   ]);
+
+  // Unified Mobile/Desktop Button Handler
+  // This is the most robust way to handle clicks in KAPLAY on mobile
+  k.onMousePress("left", () => {
+    const mpos = k.mousePos();
+    k.get("button").forEach((btn) => {
+      if (btn.hasPoint(mpos) && btn.action) {
+        btn.action();
+      }
+    });
+  });
 
   makeSonic(k.vec2(200, 745));
 
