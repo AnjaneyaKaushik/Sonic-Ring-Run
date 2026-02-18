@@ -122,6 +122,14 @@ export default function gameover(citySfx) {
     ]);
 
     restartBtn.onClick(() => k.go("game"));
+
+    // Mobile touch support
+    k.onMousePress("left", () => {
+      if (restartBtn.isHovering()) {
+        k.go("game");
+      }
+    });
+
     restartBtn.onHoverUpdate(() => {
       restartBtn.scale = k.vec2(0.11);
       k.setCursor("pointer");
@@ -142,6 +150,14 @@ export default function gameover(citySfx) {
     ]);
 
     menuBtn.onClick(() => k.go("main-menu"));
+
+    // Mobile touch support
+    k.onMousePress("left", () => {
+      if (menuBtn.isHovering()) {
+        k.go("main-menu");
+      }
+    });
+
     menuBtn.onHoverUpdate(() => {
       menuBtn.scale = k.vec2(0.11);
       k.setCursor("pointer");

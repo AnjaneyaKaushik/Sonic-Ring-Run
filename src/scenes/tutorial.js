@@ -421,6 +421,13 @@ export default function tutorial() {
 
     dashMeterContainer.onClick(() => triggerDash());
 
+    // Mobile touch support
+    k.onMousePress("left", () => {
+        if (dashMeterContainer.isHovering()) {
+            triggerDash();
+        }
+    });
+
     dashMeterContainer.onHoverUpdate(() => {
         if (dashAmount >= maxDash && !isDashing) {
             k.setCursor("pointer");

@@ -41,11 +41,20 @@ export default function mainMenu() {
     k.area(),
   ]);
 
-  playBtn.onClick(() => {
+  const handlePlayAction = () => {
     if (k.getData("tutorial-completed")) {
       k.go("game");
     } else {
       k.go("tutorial");
+    }
+  };
+
+  playBtn.onClick(handlePlayAction);
+
+  // Mobile touch support
+  k.onMousePress("left", () => {
+    if (playBtn.isHovering()) {
+      handlePlayAction();
     }
   });
 
@@ -75,6 +84,12 @@ export default function mainMenu() {
   ]);
 
   howToPlayBtn.onClick(() => k.go("tutorial"));
+
+  k.onMousePress("left", () => {
+    if (howToPlayBtn.isHovering()) {
+      k.go("tutorial");
+    }
+  });
   howToPlayBtn.onHoverUpdate(() => {
     howToPlayBtn.scale = k.vec2(1.1);
     k.setCursor("pointer");
@@ -100,6 +115,12 @@ export default function mainMenu() {
   ]);
 
   legalBtn.onClick(() => k.go("legal"));
+
+  k.onMousePress("left", () => {
+    if (legalBtn.isHovering()) {
+      k.go("legal");
+    }
+  });
   legalBtn.onHoverUpdate(() => {
     legalBtn.scale = k.vec2(1.1);
     k.setCursor("pointer");
