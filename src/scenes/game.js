@@ -22,6 +22,8 @@ export default function game() {
   let spawnedRings = [];
   let isSpawningRings = true;
   let isSpawningMotoBugs = true;
+  let dashMeterContainer = null;
+  let dashReadyText = null;
 
   // Pause/Resume functions
   const pauseGame = () => {
@@ -41,6 +43,8 @@ export default function game() {
     sonic.hidden = true;
     isSpawningRings = false;
     isSpawningMotoBugs = false;
+    if (dashMeterContainer) dashMeterContainer.hidden = true;
+    if (dashReadyText) dashReadyText.hidden = true;
 
     // Create pause overlay
     pauseOverlay = k.add([
@@ -158,6 +162,11 @@ export default function game() {
     sonic.hidden = false;
     isSpawningRings = true;
     isSpawningMotoBugs = true;
+    if (dashMeterContainer) dashMeterContainer.hidden = false;
+    if (dashReadyText) {
+      dashReadyText.hidden = false;
+      dashReadyText.opacity = dashAmount >= maxDash && !isDashing ? 1 : 0;
+    }
     spawnRing();
     spawnMotoBug();
 
@@ -394,7 +403,7 @@ export default function game() {
   ]);
 
   // Dash Meter UI
-  const dashMeterContainer = k.add([
+  dashMeterContainer = k.add([
     k.rect(300, 30, { radius: 8 }),
     k.pos(k.center().x, 1000),
     k.color(0, 0, 0, 0.7),
@@ -426,7 +435,7 @@ export default function game() {
     k.anchor("left"),
   ]);
 
-  const dashReadyText = k.add([
+  dashReadyText = k.add([
     k.text("DASH READY! (SHIFT/RIGHT)", { font: "mania", size: 24 }),
     k.pos(k.center().x, 960),
     k.color(255, 255, 255),

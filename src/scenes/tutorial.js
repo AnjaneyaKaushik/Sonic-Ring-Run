@@ -15,6 +15,8 @@ export default function tutorial() {
     let pauseUIElements = [];
     let spawnedEnemies = [];
     let spawnedRings = [];
+    let dashMeterContainer = null;
+    let dashReadyText = null;
 
     const pauseGame = () => {
         if (isPaused) return;
@@ -26,6 +28,8 @@ export default function tutorial() {
         spawnedEnemies.forEach(e => e.hidden = true);
         spawnedRings.forEach(r => r.hidden = true);
         sonic.hidden = true;
+        if (dashMeterContainer) dashMeterContainer.hidden = true;
+        if (dashReadyText) dashReadyText.hidden = true;
 
         pauseOverlay = k.add([
             k.rect(k.width(), k.height()),
@@ -107,6 +111,11 @@ export default function tutorial() {
         spawnedEnemies.forEach(e => e.hidden = false);
         spawnedRings.forEach(r => r.hidden = false);
         sonic.hidden = false;
+        if (dashMeterContainer) dashMeterContainer.hidden = false;
+        if (dashReadyText) {
+            dashReadyText.hidden = false;
+            dashReadyText.opacity = dashAmount >= maxDash && !isDashing ? 1 : 0;
+        }
 
         pauseUIElements.forEach(el => k.destroy(el));
         pauseUIElements = [];
@@ -176,7 +185,7 @@ export default function tutorial() {
     ]);
 
     // Dash Meter UI (matching game.js)
-    const dashMeterContainer = k.add([
+    dashMeterContainer = k.add([
         k.rect(300, 30, { radius: 8 }),
         k.pos(k.center().x, 1000),
         k.color(0, 0, 0, 0.7),
@@ -196,7 +205,7 @@ export default function tutorial() {
         k.anchor("left"),
     ]);
 
-    const dashReadyText = k.add([
+    dashReadyText = k.add([
         k.text("DASH READY! (SHIFT/RIGHT)", { font: "mania", size: 24 }),
         k.pos(k.center().x, 960),
         k.color(255, 255, 255),
