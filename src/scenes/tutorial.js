@@ -239,7 +239,7 @@ export default function tutorial() {
         for (let i = 0; i < lives; i++) {
             const heart = k.add([
                 k.text("❤", { font: "mania", size: 36 }),
-                k.pos(k.width() - 80 - i * 50, 40),
+                k.pos(k.width() - 150 + i * 35, 40),
                 k.color(255, 0, 0),
                 k.anchor("center"),
                 k.fixed(),

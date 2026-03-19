@@ -128,10 +128,8 @@ export default function game() {
       pauseUIElements.push(btn);
     };
 
-    // Button data
     const buttons = [
       { text: "RESUME", color: k.Color.fromArray([34, 197, 94]), action: () => resumeGame() },
-      { text: "FULLSCREEN", color: k.Color.fromArray([168, 85, 247]), action: () => k.setFullscreen(!k.isFullscreen()) },
       { text: "RESTART", color: k.Color.fromArray([59, 130, 246]), action: () => { citySfx.paused = true; citySfx.stop(); k.go("game"); } },
       { text: "QUIT", color: k.Color.fromArray([239, 68, 68]), action: () => { citySfx.paused = true; citySfx.stop(); k.go("main-menu"); } },
     ];
@@ -180,16 +178,7 @@ export default function game() {
     }
   });
 
-  // Handle browser-initiated fullscreen exit (e.g. ESC key)
-  const onFullscreenChange = () => {
-    if (!k.isFullscreen() && !isPaused) {
-      pauseGame();
-    }
-  };
-  document.addEventListener("fullscreenchange", onFullscreenChange);
-
   k.onSceneLeave(() => {
-    document.removeEventListener("fullscreenchange", onFullscreenChange);
     if (citySfx) citySfx.stop();
   });
 
@@ -362,7 +351,7 @@ export default function game() {
     for (let i = 0; i < lives; i++) {
       const heart = k.add([
         k.text("❤", { font: "mania", size: 36 }),
-        k.pos(k.width() - 80 - i * 50, 40),
+        k.pos(k.width() - 150 + i * 35, 40),
         k.color(255, 0, 0),
         k.anchor("center"),
         k.fixed(),
